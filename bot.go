@@ -20,12 +20,12 @@ func main() {
 		if len(sarr) > 0 {
 			for i, v := range sarr {
 				if i == len(sarr)-1 {
-					chain.AddEdge(v, "")
+					go chain.AddEdge(v, "")
 				} else {
-					chain.AddEdge(v, sarr[i+1])
+					go chain.AddEdge(v, sarr[i+1])
 				}
 			}
-			fmt.Printf("***Bot: %s\n", chain.GetLine(sarr[0]))
+			go fmt.Printf("*** Bot: %s\n", chain.GetLine(sarr[0]))
 		}
 
 	}

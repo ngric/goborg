@@ -2,9 +2,11 @@ package markov
 
 import (
 	"math/rand"
+	"sync"
 )
 
 type Chain struct {
+	mut   sync.RWMutex
 	words map[string]word
 }
 
@@ -26,6 +28,9 @@ func NewChain() Chain {
 }
 
 func (c *Chain) AddEdge(from, to string) {
+	c.mut.Lock()
+	defer c.mut.Unlock()
+
 	w, ok := (*c).words[from]
 
 	if ok { // if the starting word exists, add edge leading to dest word
@@ -47,6 +52,8 @@ func (c *Chain) AddEdge(from, to string) {
 }
 
 func (c *Chain) nextFrom(s string) string {
+	c.mut.RLock()
+	defer c.mut.RUnlock()
 	w := (*c).words[s]
 
 	if l := w.links; l > 0 {
@@ -63,9 +70,10 @@ func (c *Chain) nextFrom(s string) string {
 }
 
 func (c *Chain) GetLine(start string) string {
-	s := ""
-	for w := c.nextFrom(start); w != ""; w = c.nextFrom(w) {
+	s, w := "", c.nextFrom(start)
+	for w != "" {
 		s += w + " "
+		w = c.nextFrom(w)
 	}
 	return s
 }
