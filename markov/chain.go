@@ -2,18 +2,15 @@ package markov
 
 import (
 	"math/rand"
-	"sync"
 )
 
 type Chain struct {
 	words map[string]word
-	m     sync.Mutex
 }
 
 type word struct {
 	edges map[string]int
 	links int
-	m     sync.Mutex
 }
 
 func newWord() word {
@@ -32,9 +29,6 @@ func (c *Chain) AddEdge(from, to string) {
 	w, ok := (*c).words[from]
 
 	if ok { // if the starting word exists, add edge leading to dest word
-		w.m.Lock()
-		defer w.m.Unlock()
-
 		_, ok = w.edges[to]
 		if ok { // if a matching edge already exists, increment its weight
 			w.edges[to]++
@@ -44,9 +38,6 @@ func (c *Chain) AddEdge(from, to string) {
 		w.links++
 		return
 	} else { // starting word is new, add to chain
-		c.m.Lock()
-		defer c.m.Unlock()
-
 		w = newWord()
 		w.edges[to] = 1
 		w.links++
@@ -57,15 +48,15 @@ func (c *Chain) AddEdge(from, to string) {
 
 func (c *Chain) nextFrom(s string) string {
 	w := (*c).words[s]
-	w.m.Lock()
-	defer w.m.Unlock()
 
-	n := rand.Intn(w.links)
-	sum := 0
-	for k, v := range w.edges {
-		sum += v
-		if sum >= n {
-			return k
+	if l := w.links; l > 0 {
+		n := rand.Intn(l)
+		sum := 0
+		for k, v := range w.edges {
+			sum += v
+			if sum >= n {
+				return k
+			}
 		}
 	}
 	return ""
