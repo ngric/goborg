@@ -7,23 +7,23 @@ import (
 
 type Chain struct {
 	mut   sync.RWMutex
-	words map[string]word
+	Words map[string]Word
 }
 
-type word struct {
-	edges map[string]int
-	links int
+type Word struct {
+	Edges map[string]int
+	Links int
 }
 
-func newWord() word {
-	var w word
-	w.edges = make(map[string]int)
+func newWord() Word {
+	var w Word
+	w.Edges = make(map[string]int)
 	return w
 }
 
 func NewChain() Chain {
 	var c Chain
-	c.words = make(map[string]word)
+	c.Words = make(map[string]Word)
 	return c
 }
 
@@ -31,22 +31,22 @@ func (c *Chain) AddEdge(from, to string) {
 	c.mut.Lock()
 	defer c.mut.Unlock()
 
-	w, ok := (*c).words[from]
+	w, ok := (*c).Words[from]
 
 	if ok { // if the starting word exists, add edge leading to dest word
-		_, ok = w.edges[to]
+		_, ok = w.Edges[to]
 		if ok { // if a matching edge already exists, increment its weight
-			w.edges[to]++
+			w.Edges[to]++
 		} else { // make the edge if it's new
-			w.edges[to] = 1
+			w.Edges[to] = 1
 		}
-		w.links++
+		w.Links++
 		return
 	} else { // starting word is new, add to chain
 		w = newWord()
-		w.edges[to] = 1
-		w.links++
-		(*c).words[from] = w
+		w.Edges[to] = 1
+		w.Links++
+		(*c).Words[from] = w
 		return
 	}
 }
@@ -54,12 +54,12 @@ func (c *Chain) AddEdge(from, to string) {
 func (c *Chain) nextFrom(s string) string {
 	c.mut.RLock()
 	defer c.mut.RUnlock()
-	w := (*c).words[s]
+	w := (*c).Words[s]
 
-	if l := w.links; l > 0 {
+	if l := w.Links; l > 0 {
 		n := rand.Intn(l)
 		sum := 0
-		for k, v := range w.edges {
+		for k, v := range w.Edges {
 			sum += v
 			if sum >= n {
 				return k
