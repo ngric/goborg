@@ -7,9 +7,12 @@
     * Compiler can be found at golang.org, or any linux package repository
 
 2. Paradigm
-    * The language has functional features, but appears to be largely imperative/OO
+    * The language has functional features
+        * Closures, function passing/returning
+    * Still largely imperitave
 3. Typing System
     * Strongly typed, declarations not required
+    * Programmer is free to create new types
 4. Control Structures
     * for loops (also function as while loops)
     * if statements
@@ -22,5 +25,7 @@
     * Defer
         * defers the execution of a function until the surrounding function returns
 5. Semantics
+    * Statically scoped
+    * Garbage is handled automatically by the runtime
 6. Desirable Language Characteristics
     * Security - Go has garbage collection
