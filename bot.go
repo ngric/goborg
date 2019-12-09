@@ -24,6 +24,7 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -36,7 +37,7 @@ var (
 	bot      markov.Chain
 	token    string
 	lastChan string  // store this so that we can give a parting message
-	rate     float32 // probability that any given message will get a reply
+	rate     float64 // probability that any given message will get a reply
 )
 
 // runs at program launch. reads in token from arguments and loads
@@ -151,6 +152,11 @@ func parseMessage(msg string) string {
 	// break message into string array delimited on spaces
 	sarr := strings.Fields(msg)
 
+	// pass message to command handler if it starts with "!set"
+	if sarr[0] == "!set" {
+		return parseCommand(sarr)
+	}
+
 	if len(sarr) > 0 { // messages should always be non-empty, but just in case
 		for i, v := range sarr {
 			// last word in message has an edge to "", which
@@ -163,7 +169,7 @@ func parseMessage(msg string) string {
 		}
 
 		// roll for a reply
-		if rand.Float32() < rate {
+		if rand.Float64() < rate {
 			n := rand.Intn(len(sarr)) // choose reply seed at random
 			reply := bot.GetLine(sarr[n])
 			return reply
@@ -171,4 +177,21 @@ func parseMessage(msg string) string {
 	}
 
 	return ""
+}
+
+// change bot behavior according to passed string
+// currently accepts:
+//	rate number: changes the percentage of messages the bot replies to
+func parseCommand(cmd []string) string {
+	if cmd[1] == "rate" && len(cmd) == 3 {
+		// attempt to get reply rate from string
+		f, err := strconv.ParseFloat(cmd[2], 64)
+
+		// change rate only if there was an actual number
+		if err == nil {
+			rate = f
+			return fmt.Sprintf("Set reply rate to %f", rate)
+		}
+	}
+	return fmt.Sprintf("Invalid Command")
 }
