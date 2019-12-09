@@ -15,11 +15,16 @@
 package markov
 
 import (
+	"bufio"
+	"encoding/gob"
+	"fmt"
+	"log"
 	"math/rand"
+	"os"
 	"sync"
 )
 
-// Overall markov-chain struct. Just a string:Word map with a mutex
+// Overall markov-chain struct. Just a string:Word map with a Mutex
 type Chain struct {
 	mut   sync.RWMutex
 	Words map[string]Word
@@ -50,7 +55,7 @@ func NewChain() Chain {
 // adds a new directed edge between two words. If a matching edge already exists
 // the weight of the edge is incremented by one.
 func (c *Chain) AddEdge(from, to string) {
-	// potentially excessive mutex. Invalidates any potintial Chain-related
+	// potentially excessive Mutex. Invalidates any potintial Chain-related
 	// concurrency as currently implemented
 	c.mut.Lock()
 	defer c.mut.Unlock()
@@ -109,4 +114,32 @@ func (c *Chain) nextFrom(s string) string {
 	}
 
 	return ""
+}
+
+// saves a Chain struct (the bot's 'brain') to disk.
+// will overwrite the file if it already exists
+func (c *Chain) Save() {
+	c.mut.RLock()
+	defer c.mut.RUnlock()
+
+	fmt.Println("Saving......")
+
+	f, err := os.Create("brain") // truncates the file if it already exists
+	defer f.Close()              // make sure the file is closed when this method returns
+
+	if err != nil {
+		fmt.Println("Unable to open brain for saving.")
+		return
+	}
+
+	// write Chain to disk
+	w := bufio.NewWriter(f)  // file output stream
+	enc := gob.NewEncoder(w) // encodes whatever it's given, then passes it to w
+	err = enc.Encode(c)
+
+	if err != nil {
+		log.Fatal("Error while writing brain, ", err)
+	}
+
+	w.Flush() // flush output buffers to disk
 }
