@@ -116,7 +116,7 @@ func (c *Chain) nextFrom(s string) string {
 	return ""
 }
 
-// saves a Chain struct (the bot's 'brain') to disk.
+// saves a Chain struct to disk.
 // will overwrite the file if it already exists
 func (c *Chain) Save() {
 	c.mut.RLock()

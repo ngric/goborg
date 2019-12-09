@@ -66,13 +66,15 @@ func main() {
 		return
 	}
 
-	go func() { // start auto save go routine in the bg
+	go func() { // start go routine that periodically calls save
 		delay, _ := time.ParseDuration("10m")
-		for {
+		for { // loop forever
 			time.Sleep(delay)
 			bot.Save()
 		}
 	}()
+
+	go consoleInput()
 
 	// continue to run until we receive an interrupt of some variety
 	// eg: Ctrl-C
@@ -111,19 +113,43 @@ func load() {
 }
 
 // method that runs every time a message is received from discord
-// trains the markov chain on the contents of the message, and potentially
-// gets/sends a reply
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// ignore messages that originate from goborg itself
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
 
-	// print to console
+	// print the message to console
 	fmt.Printf("MSG: %s\n", m.Content)
 
+	// have the message placed into the chain
+	reply := parseMessage(m.Content)
+	if reply != "" { // send reply if we got one
+		s.ChannelMessageSend(m.ChannelID, reply)
+		fmt.Printf("REPLYING: %s\n", reply)
+	}
+
+	lastChan = m.ChannelID // store for "goodbye" message on quit
+}
+
+// takes user input from console
+func consoleInput() {
+	r := bufio.NewReader(os.Stdin) // buffered stdin reader
+
+	for { // endlessly loop, taking input from stdin
+		in, _ := r.ReadString('\n')
+		reply := parseMessage(in)
+		if reply != "" {
+			fmt.Printf("CONSOLE REPLY: %s\n", reply)
+		}
+	}
+}
+
+// trains the markov chain on the contents of the message, and potentially
+// gets a reply. If no reply is generated, returns empty staing
+func parseMessage(msg string) string {
 	// break message into string array delimited on spaces
-	sarr := strings.Fields(m.Content)
+	sarr := strings.Fields(msg)
 
 	if len(sarr) > 0 { // messages should always be non-empty, but just in case
 		for i, v := range sarr {
@@ -138,12 +164,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		// roll for a reply
 		if rand.Float32() < rate {
-			reply := bot.GetLine(sarr[0])
-			s.ChannelMessageSend(m.ChannelID, reply)
-			fmt.Printf("REPLYING: %s\n", reply)
+			n := rand.Intn(len(sarr)) // choose reply seed at random
+			reply := bot.GetLine(sarr[n])
+			return reply
 		}
-
-		lastChan = m.ChannelID // store for "goodbye" message on quit
 	}
 
+	return ""
 }
