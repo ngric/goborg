@@ -80,6 +80,8 @@ func main() {
 // expects to find it in a file named 'brain', if it can't find or open
 // such a file, the bot will start from empty
 func load() {
+	fmt.Println("Loading......")
+
 	f, err := os.Open("brain") // attempt to open file
 	defer f.Close()            // close file when this method returns
 
@@ -102,6 +104,8 @@ func load() {
 // saves a Chain struct (the bot's 'brain') to disk.
 // will overwrite the file if it already exists
 func save() {
+	fmt.Println("Saving......")
+
 	f, err := os.Create("brain") // truncates the file if it already exists
 	defer f.Close()              // make sure the file is closed when this method returns
 
@@ -131,6 +135,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	// print to console
+	fmt.Printf("MSG: %s\n", m.Content)
+
 	// break message into string array delimited on spaces
 	sarr := strings.Fields(m.Content)
 
@@ -149,6 +156,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if rand.Float32() < rate {
 			reply := Chain.GetLine(sarr[0])
 			s.ChannelMessageSend(m.ChannelID, reply)
+			fmt.Printf("REPLYING: %s\n", reply)
 		}
 
 		lastChan = m.ChannelID // store for "goodbye" message on quit
