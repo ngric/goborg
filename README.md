@@ -1,3 +1,33 @@
+# Goborg
+
+I created a markov-chain based chatbot that connects to the discord chat 
+service. As go is a reasonably popular language, I was able to find pre-existing
+code to connect to discord. Making use of that project, I was able to focus on
+making the bot, instead of making the connection. Additionally, it should be
+easy to connect it to different services if I choose to do so in the future.
+
+What I wrote myself was the Markov chain implementation. This takes strings of
+input (either messages from discord, or from console), and breaks them into pairs
+of consecutive words, each word forming a pair with both the words directly
+before and after it. These pairs are then added to the chain, updating the
+weights on any previously existing edges, and adding new ones as necessary.
+Occasionally, the bot will generate a reply to a message it receives, by
+traversing the chain from a random word in the message.
+
+The chain itself is just an associative array with a mutex. While the data
+structure is present in just about every language, go's maps did make it about
+as easy as I would expect it to be. More unique to go is it's concurrency, which
+was equally easy to make use of. By just adding a single word to a function call,
+```go```, I was able to have it fork into a new thread. This was super useful
+when I wanted to have the bot periodically save it's brain in the background.
+Originally, I had also intended to use it to read in multiple pairs of words to
+the chain at once. Unfortunately, since the bot is based on a _single_ markov
+chain in memory, the necessary mutexs blocked near to the point of being a single
+thread process. That said, it still allows for multiple reads to occur at once, 
+and pushing everything into goroutines took care of queueing up all edge changes
+for me. Even if the changes to the chain blocked each other, the rest of the 
+program was allowed to continue working.
+
 # Golang
 
 1. History
